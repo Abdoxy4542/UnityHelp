@@ -1,0 +1,23 @@
+INFO 2025-08-29 11:41:41,670 autoreload 3832 19188 Watching for file changes with StatReloader
+INFO 2025-08-29 11:50:24,275 autoreload 3832 19188 C:\Users\Lenovo\Desktop\unityaid_platform\config\settings\base.py changed, reloading.
+INFO 2025-08-29 11:50:25,693 autoreload 11124 15780 Watching for file changes with StatReloader
+INFO 2025-08-29 11:51:38,909 autoreload 11124 15780 C:\Users\Lenovo\Desktop\unityaid_platform\config\settings\development.py changed, reloading.
+INFO 2025-08-29 11:51:39,963 autoreload 336 17556 Watching for file changes with StatReloader
+INFO 2025-08-29 11:52:14,137 autoreload 336 17556 C:\Users\Lenovo\Desktop\unityaid_platform\config\settings\development.py changed, reloading.
+INFO 2025-08-29 11:52:15,245 autoreload 18888 16624 Watching for file changes with StatReloader
+INFO 2025-08-29 11:52:20,358 autoreload 18888 16624 C:\Users\Lenovo\Desktop\unityaid_platform\config\settings\base.py changed, reloading.
+INFO 2025-08-29 11:52:21,755 autoreload 16712 10800 Watching for file changes with StatReloader
+INFO 2025-08-29 11:52:53,340 autoreload 16712 10800 C:\Users\Lenovo\Desktop\unityaid_platform\apps\accounts\views.py changed, reloading.
+INFO 2025-08-29 11:52:54,422 autoreload 15508 7024 Watching for file changes with StatReloader
+INFO 2025-08-29 11:53:13,507 autoreload 15508 7024 C:\Users\Lenovo\Desktop\unityaid_platform\apps\accounts\serializers\serializers.py changed, reloading.
+INFO 2025-08-29 11:53:14,492 autoreload 8468 8524 Watching for file changes with StatReloader
+INFO 2025-08-29 11:54:04,621 autoreload 8468 8524 C:\Users\Lenovo\Desktop\unityaid_platform\apps\sites\models.py changed, reloading.
+INFO 2025-08-29 11:54:05,622 autoreload 15040 15896 Watching for file changes with StatReloader
+INFO 2025-08-29 11:54:58,581 autoreload 16884 14096 Watching for file changes with StatReloader
+INFO 2025-08-29 11:55:01,783 autoreload 15040 15896 C:\Users\Lenovo\Desktop\unityaid_platform\apps\reports\apps.py changed, reloading.
+INFO 2025-08-29 11:55:01,913 autoreload 16884 14096 C:\Users\Lenovo\Desktop\unityaid_platform\apps\sites\apps.py changed, reloading.
+INFO 2025-08-29 11:55:02,838 autoreload 8316 17276 Watching for file changes with StatReloader
+INFO 2025-08-29 11:55:02,909 autoreload 15108 8768 Watching for file changes with StatReloader
+WARNING 2025-08-29 11:55:21,502 log 8316 19280 Not Found: /
+WARNING 2025-08-29 11:55:22,815 log 8316 19280 Not Found: /
+WARNING 2025-08-29 11:55:23,099 log 8316 19280 Not Found: /favicon.ico
