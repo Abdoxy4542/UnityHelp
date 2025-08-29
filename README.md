@@ -69,15 +69,71 @@ Install all the required Python packages using the `requirements.txt` file:
 pip install -r requirements.txt
 ```
 
-### 5. Set Up the Database
+### 5. Set Up the PostgreSQL Database
 
-Run the initial database migrations to set up the necessary tables.
+This project is configured to use a PostgreSQL database with the PostGIS extension for geographic data support.
+
+1.  **Install PostgreSQL & PostGIS**:
+    *   Download and install PostgreSQL from the [official website](https://www.postgresql.org/download/). During installation, you will be prompted to set a password for the default `postgres` user. **Remember this password.**
+    *   After installing PostgreSQL, use the "Application Stack Builder" (included with the installation) to add the **PostGIS** extension. This is required for handling geographic data.
+
+2.  **Create the Database (`unityaid_db`)**:
+    You can do this using a graphical tool like pgAdmin (recommended) or the command line.
+
+    *   **Option A: Using pgAdmin (Easy)**
+        1.  Open pgAdmin and connect to your server using the password you set.
+        2.  In the left panel, right-click **Databases** -> **Create** -> **Database...**.
+        3.  Enter `unityaid_db` as the "Database name" and click **Save**.
+
+    *   **Option B: Using SQL Shell (psql)**
+        1.  Open the "SQL Shell (psql)" application.
+        2.  Press Enter to accept the default connection settings until it prompts for a password.
+        3.  Enter your PostgreSQL password.
+        4.  At the `postgres=#` prompt, type the following command and press Enter:
+            ```sql
+            CREATE DATABASE unityaid_db;
+            ```
+
+3.  **Create and Configure the `.env` File**:
+    This file securely stores your database credentials in the project's root folder (the same folder as `manage.py`).
+
+    1.  **Create the file**: Open a text editor (like Notepad), paste the content below, and go to `File > Save As...`. Set the "Save as type" to **All Files (\*.\*)** and name the file `.env`.
+    2.  **Add the content**:
+        ```env
+        # .env file for UnityAid Platform
+
+        # --- SECURITY WARNING ---
+        # Generate a new secret key for production.
+        SECRET_KEY='your-secret-key-here'
+
+        # Set to False in production
+        DEBUG=True
+
+        # --- DATABASE CONFIGURATION ---
+        DB_NAME=unityaid_db
+        DB_USER=postgres
+        DB_PASSWORD=your_postgres_password
+        DB_HOST=localhost
+        DB_PORT=5432
+        ```
+    3.  **Update the placeholders**:
+        *   Replace `your_postgres_password` with the actual password for your `postgres` user.
+        *   Replace `your-secret-key-here` with a new secret key. Generate one by running this command in your terminal:
+          ```bash
+          python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+          ```
+          Copy the output and paste it into the `.env` file.
+
+### 6. Run Database Migrations
+
+With the database and `.env` file configured, run the initial migrations to build your database tables.
+
 
 ```bash
 python manage.py migrate
 ```
 
-### 6. Create a Superuser (Admin)
+### 7. Create a Superuser (Admin)
 
 Create an admin account to access the Django admin interface:
 
@@ -86,7 +142,7 @@ python manage.py createsuperuser
 ```
 Follow the prompts to set a username, email, and password.
 
-### 7. Run the Development Server
+### 8. Run the Development Server
 
 Start the local development server:
 
