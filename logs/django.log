@@ -21,3 +21,5 @@ INFO 2025-08-29 11:55:02,909 autoreload 15108 8768 Watching for file changes wit
 WARNING 2025-08-29 11:55:21,502 log 8316 19280 Not Found: /
 WARNING 2025-08-29 11:55:22,815 log 8316 19280 Not Found: /
 WARNING 2025-08-29 11:55:23,099 log 8316 19280 Not Found: /favicon.ico
+INFO 2025-08-29 16:07:51,321 autoreload 8084 5976 Watching for file changes with StatReloader
+WARNING 2025-08-29 16:08:00,995 log 8084 20008 Not Found: /
