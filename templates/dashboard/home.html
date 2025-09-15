@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UnityAid Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .assessment-card { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            background: #f9f9f9;
+        }
+        .launch-btn { 
+            background: #007cba; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        .launch-btn:hover { background: #005a87; }
+        .status { padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .status.active { background: #d4edda; color: #155724; }
+        .status.draft { background: #f8d7da; color: #721c24; }
+        .status.completed { background: #d1ecf1; color: #0c5460; }
+        .create-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .create-btn:hover { background: #1e7e34; color: white; }
+        .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .dashboard-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .assessment-actions { margin-top: 10px; }
+        .btn-small {
+            padding: 5px 12px;
+            font-size: 12px;
+            margin-right: 5px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-small.primary { background: #007cba; }
+        .btn-small.success { background: #28a745; }
+        .btn-small.danger { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>UnityAid Dashboard</h1>
+    <h2>Welcome, {{ user.username }}</h2>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Assessment Management</h3>
+        <div>
+            <a href="/api/v1/assessments/kobo-settings/" class="create-btn" style="background: #6c757d; margin-right: 10px;">⚙️ Kobo Settings</a>
+            <a href="/api/v1/assessments/create/" class="create-btn">+ Create New Assessment</a>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h4>My Assessments</h4>
+            <div id="assessments-container">
+                <p>Loading assessments...</p>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h4>Assessment Statistics</h4>
+            <div id="stats-container">
+                <p>Loading statistics...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load assessment data
+        Promise.all([
+            fetch('/api/v1/assessments/assessments/'),
+            fetch('/api/v1/dashboard/api/assessments/')
+        ])
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(([assessments, dashboardData]) => {
+            displayAssessments(assessments.results || assessments);
+            displayStats(dashboardData);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            document.getElementById('assessments-container').innerHTML =
+                '<p>Error loading data. Please check your connection.</p>';
+        });
+
+        function displayAssessments(assessments) {
+            const container = document.getElementById('assessments-container');
+
+            if (assessments.length === 0) {
+                container.innerHTML = '<p>No assessments created yet. <a href="/api/v1/assessments/create/">Create your first assessment</a></p>';
+                return;
+            }
+
+            container.innerHTML = assessments.map(assessment => `
+                <div class="assessment-card">
+                    <h4>${assessment.title}</h4>
+                    <p><span class="status ${assessment.status}">${assessment.status.toUpperCase()}</span></p>
+                    <p><strong>Type:</strong> ${assessment.assessment_type}</p>
+                    <p><strong>Target Sites:</strong> ${assessment.target_sites_count || assessment.target_sites?.length || 0}</p>
+                    <p><strong>Responses:</strong> ${assessment.response_count || 0}</p>
+                    <p><strong>Created:</strong> ${new Date(assessment.created_at).toLocaleDateString()}</p>
+
+                    <div class="assessment-actions">
+                        ${assessment.status === 'draft' ?
+                            `<button class="btn-small primary" onclick="sendToSites(${assessment.id})">Send to Sites</button>` :
+                            ''}
+                        ${assessment.status === 'active' ?
+                            `<button class="btn-small success" onclick="viewResponses(${assessment.id})">View Responses</button>` :
+                            ''}
+                        <button class="btn-small" onclick="editAssessment(${assessment.id})">Edit</button>
+                        <button class="btn-small" onclick="syncData(${assessment.id})">Sync Data</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayStats(data) {
+            const container = document.getElementById('stats-container');
+
+            const statusCounts = data.status_counts || {};
+            const typeCounts = data.type_counts || {};
+
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h5>By Status</h5>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>Draft: ${statusCounts.draft || 0}</li>
+                        <li>Active: ${statusCounts.active || 0}</li>
+                        <li>Completed: ${statusCounts.completed || 0}</li>
+                        <li>Archived: ${statusCounts.archived || 0}</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5>By Type</h5>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>Rapid: ${typeCounts.rapid || 0}</li>
+                        <li>Detailed: ${typeCounts.detailed || 0}</li>
+                        <li>Needs: ${typeCounts.needs || 0}</li>
+                        <li>Monitoring: ${typeCounts.monitoring || 0}</li>
+                        <li>Baseline: ${typeCounts.baseline || 0}</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Action functions
+        function sendToSites(assessmentId) {
+            if (confirm('Send this assessment to gathering sites?')) {
+                fetch(`/api/v1/assessments/assessments/${assessmentId}/send-to-sites/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    },
+                    body: JSON.stringify({})  // Will use all target sites
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        location.reload(); // Refresh to show updated status
+                    } else {
+                        alert('Error: ' + (data.error || 'Could not send assessment'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending assessment:', error);
+                    alert('Error sending assessment');
+                });
+            }
+        }
+
+        function viewResponses(assessmentId) {
+            window.open(`/api/v1/assessments/responses/?assessment=${assessmentId}`, '_blank');
+        }
+
+        function editAssessment(assessmentId) {
+            // This would link to an edit page
+            alert('Edit functionality will open assessment edit page');
+        }
+
+        function syncData(assessmentId) {
+            if (confirm('Sync latest data from Kobo for this assessment?')) {
+                fetch(`/api/v1/assessments/kobo/sync/${assessmentId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Could not sync data'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error syncing data:', error);
+                    alert('Error syncing data');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

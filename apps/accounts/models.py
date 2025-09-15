@@ -2,6 +2,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+import random
+import string
 
 class User(AbstractUser):
     """Custom user model for UnityAid platform"""
@@ -52,5 +55,77 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+class EmailVerification(models.Model):
+    """Model for email verification codes"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verifications')
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = _('Email Verification')
+        verbose_name_plural = _('Email Verifications')
+    
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_code()
+        if not self.expires_at:
+            # Code expires in 10 minutes
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        super().save(*args, **kwargs)
+    
+    def generate_code(self):
+        """Generate a 6-digit verification code"""
+        return ''.join(random.choices(string.digits, k=6))
+    
+    def is_expired(self):
+        """Check if the verification code has expired"""
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        """Check if the code is valid (not used and not expired)"""
+        return not self.is_used and not self.is_expired()
+    
+    def __str__(self):
+        return f"Verification code for {self.email}"
+
+class PasswordReset(models.Model):
+    """Model for password reset codes"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_resets')
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = _('Password Reset')
+        verbose_name_plural = _('Password Resets')
+    
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_code()
+        if not self.expires_at:
+            # Code expires in 15 minutes
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
+        super().save(*args, **kwargs)
+    
+    def generate_code(self):
+        """Generate a 6-digit reset code"""
+        return ''.join(random.choices(string.digits, k=6))
+    
+    def is_expired(self):
+        """Check if the reset code has expired"""
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        """Check if the code is valid (not used and not expired)"""
+        return not self.is_used and not self.is_expired()
+    
+    def __str__(self):
+        return f"Password reset code for {self.email}"
 
 # Create your models here.

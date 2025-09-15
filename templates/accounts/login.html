@@ -1,0 +1,59 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Login - UnityAid Platform{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-hands-helping fa-3x text-primary mb-3"></i>
+                        <h2 class="h4 mb-0">Welcome to UnityAid</h2>
+                        <p class="text-muted">Sign in to your account</p>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> Password
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <a href="{% url 'accounts:forgot_password' %}" class="text-decoration-none">
+                                <i class="fas fa-key"></i> Forgot Password?
+                            </a>
+                        </div>
+                        <p class="mb-0">Don't have an account?</p>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
