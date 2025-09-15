@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Assessment - UnityAid</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background: #007cba;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #005a87;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .kobo-forms {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .kobo-form-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .kobo-form-item:hover {
+            background: #f8f9fa;
+        }
+        .kobo-form-item.selected {
+            background: #e3f2fd;
+            border-left: 4px solid #007cba;
+        }
+        .kobo-form-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .kobo-form-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .site-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .site-card:hover {
+            background: #f8f9fa;
+        }
+        .site-card.selected {
+            background: #e3f2fd;
+            border-color: #007cba;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            margin: 0 5px;
+            border-radius: 4px;
+        }
+        .step.active {
+            background: #007cba;
+            color: white;
+        }
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Create New Assessment</h1>
+            <p>Design and deploy assessments to gathering site mobile apps using Kobo forms</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step1">1. Basic Info</div>
+            <div class="step" id="step2">2. Select Kobo Form</div>
+            <div class="step" id="step3">3. Choose Sites</div>
+            <div class="step" id="step4">4. Review & Send</div>
+        </div>
+
+        <form id="assessmentForm">
+            <!-- Step 1: Basic Information -->
+            <div class="form-section" id="section1">
+                <h3>Assessment Details</h3>
+
+                <div class="form-group">
+                    <label for="title">Assessment Title*</label>
+                    <input type="text" id="title" name="title" required placeholder="e.g., Emergency Needs Assessment - December 2024">
+                </div>
+
+                <div class="form-group">
+                    <label for="title_ar">Assessment Title (Arabic)</label>
+                    <input type="text" id="title_ar" name="title_ar" placeholder="العنوان باللغة العربية">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" placeholder="Describe the purpose and scope of this assessment..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="assessment_type">Assessment Type*</label>
+                    <select id="assessment_type" name="assessment_type" required>
+                        <option value="rapid">Rapid Assessment</option>
+                        <option value="detailed">Detailed Assessment</option>
+                        <option value="needs">Needs Assessment</option>
+                        <option value="monitoring">Monitoring & Evaluation</option>
+                        <option value="baseline">Baseline Assessment</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next: Select Form</button>
+            </div>
+
+            <!-- Step 2: Kobo Form Selection -->
+            <div class="form-section" id="section2" style="display:none;">
+                <h3>Select Kobo Form</h3>
+                <p>Choose a Kobo form to use for this assessment</p>
+
+                <div id="koboOptions">
+                    <button type="button" class="btn btn-secondary" onclick="loadKoboForms()">Load My Kobo Forms</button>
+                    <span style="margin: 0 15px; color: #666;">OR</span>
+                    <button type="button" class="btn btn-primary" onclick="showManualForm()">Create Custom Form</button>
+                </div>
+
+                <div id="koboConfig" style="display:none; margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 4px;">
+                    <p>⚠️ <strong>Kobo Integration Not Configured</strong></p>
+                    <p>To use Kobo forms, you need to configure your Kobo API credentials first.</p>
+                    <a href="/api/v1/assessments/kobo-settings/" class="btn btn-primary">Configure Kobo Settings</a>
+                </div>
+
+                <div id="koboFormsContainer">
+                    <div class="loading" id="koboLoading" style="display:none;">
+                        Loading your Kobo forms...
+                    </div>
+                    <div class="kobo-forms" id="koboForms" style="display:none;"></div>
+                </div>
+
+                <!-- Manual Form Creation -->
+                <div id="manualFormSection" style="display:none; margin-top: 20px;">
+                    <h4>Create Custom Assessment Form</h4>
+                    <div class="form-group">
+                        <label for="manual_form_name">Form Name</label>
+                        <input type="text" id="manual_form_name" placeholder="e.g., Emergency Needs Assessment Form">
+                    </div>
+                    <div class="form-group">
+                        <label for="manual_form_url">Form URL (Optional)</label>
+                        <input type="url" id="manual_form_url" placeholder="https://your-form-url.com">
+                        <div class="help-text">If you have an external form URL, enter it here</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="form_instructions">Instructions for GSOs</label>
+                        <textarea id="form_instructions" rows="4"
+                                  placeholder="Provide specific instructions for gathering site officials on how to conduct this assessment..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="useManualForm()">Use This Form</button>
+                </div>
+
+                <input type="hidden" id="selectedKoboForm" name="kobo_form_id">
+                <input type="hidden" id="selectedKoboFormUrl" name="kobo_form_url">
+                <input type="hidden" id="formInstructions" name="form_instructions">
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Previous</button>
+                    <button type="button" class="btn btn-primary" id="selectSitesBtn" onclick="nextStep(3)" disabled>Next: Choose Sites</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Site Selection -->
+            <div class="form-section" id="section3" style="display:none;">
+                <h3>Select Gathering Sites</h3>
+                <p>Choose which gathering sites should receive this assessment</p>
+
+                <div class="sites-grid" id="sitesGrid">
+                    <div class="loading">Loading gathering sites...</div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Previous</button>
+                    <button type="button" class="btn btn-primary" id="reviewBtn" onclick="nextStep(4)" disabled>Next: Review</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Review and Send -->
+            <div class="form-section" id="section4" style="display:none;">
+                <h3>Review Assessment</h3>
+
+                <div id="reviewContent">
+                    <!-- Review content will be populated here -->
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="previousStep(3)">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="createAndSendAssessment()">Create & Send Assessment</button>
+                </div>
+            </div>
+        </form>
+
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedKoboForm = null;
+        let selectedSites = [];
+        let allSites = [];
+
+        // Step navigation
+        function nextStep(step) {
+            document.getElementById('section' + currentStep).style.display = 'none';
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('step' + currentStep).classList.add('completed');
+
+            currentStep = step;
+            document.getElementById('section' + currentStep).style.display = 'block';
+            document.getElementById('step' + currentStep).classList.add('active');
+
+            if (step === 3) {
+                loadSites();
+            } else if (step === 4) {
+                populateReview();
+            }
+        }
+
+        function previousStep(step) {
+            document.getElementById('section' + currentStep).style.display = 'none';
+            document.getElementById('step' + currentStep).classList.remove('active');
+
+            currentStep = step;
+            document.getElementById('section' + currentStep).style.display = 'block';
+            document.getElementById('step' + currentStep).classList.remove('completed');
+            document.getElementById('step' + currentStep).classList.add('active');
+        }
+
+        // Load Kobo forms
+        async function loadKoboForms() {
+            const loading = document.getElementById('koboLoading');
+            const container = document.getElementById('koboForms');
+            const configWarning = document.getElementById('koboConfig');
+
+            loading.style.display = 'block';
+            configWarning.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/v1/assessments/kobo/forms/', {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    }
+                });
+
+                const forms = await response.json();
+
+                if (response.ok) {
+                    displayKoboForms(forms);
+                } else {
+                    // Check if it's an authentication/configuration error
+                    if (forms.error && (forms.error.includes('not configured') ||
+                                       forms.error.includes('401') ||
+                                       forms.error.includes('Unauthorized'))) {
+                        configWarning.style.display = 'block';
+                    } else {
+                        showError('Failed to load Kobo forms: ' + (forms.error || 'Unknown error'));
+                    }
+                }
+            } catch (error) {
+                showError('Error connecting to Kobo: ' + error.message);
+                // Show configuration warning for network errors too
+                configWarning.style.display = 'block';
+            }
+
+            loading.style.display = 'none';
+        }
+
+        // Show manual form creation section
+        function showManualForm() {
+            document.getElementById('manualFormSection').style.display = 'block';
+            document.getElementById('koboFormsContainer').style.display = 'none';
+            document.getElementById('koboConfig').style.display = 'none';
+        }
+
+        // Use manual form
+        function useManualForm() {
+            const formName = document.getElementById('manual_form_name').value;
+            const formUrl = document.getElementById('manual_form_url').value;
+            const instructions = document.getElementById('form_instructions').value;
+
+            if (!formName) {
+                alert('Please enter a form name');
+                return;
+            }
+
+            // Set form data
+            selectedKoboForm = {
+                uid: 'manual_' + Date.now(),
+                name: formName,
+                url: formUrl,
+                instructions: instructions,
+                type: 'manual'
+            };
+
+            document.getElementById('selectedKoboForm').value = selectedKoboForm.uid;
+            document.getElementById('selectedKoboFormUrl').value = formUrl;
+            document.getElementById('formInstructions').value = instructions;
+            document.getElementById('selectSitesBtn').disabled = false;
+
+            showSuccess(`Custom form "${formName}" created successfully!`);
+        }
+
+        function displayKoboForms(forms) {
+            const container = document.getElementById('koboForms');
+
+            if (forms.length === 0) {
+                container.innerHTML = '<p style="padding: 20px; text-align: center;">No Kobo forms found. Please create forms in your Kobo account first.</p>';
+            } else {
+                container.innerHTML = forms.map(form => `
+                    <div class="kobo-form-item" onclick="selectKoboForm('${form.uid}', '${form.name}', '${form.url || ''}')">
+                        <div class="kobo-form-title">${form.name}</div>
+                        <div class="kobo-form-meta">
+                            Created: ${new Date(form.date_created).toLocaleDateString()} |
+                            Submissions: ${form.submissions_count || 0} |
+                            Status: ${form.deployment_status || 'Not deployed'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            container.style.display = 'block';
+        }
+
+        function selectKoboForm(uid, name, url) {
+            // Remove previous selection
+            document.querySelectorAll('.kobo-form-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Select current form
+            event.currentTarget.classList.add('selected');
+
+            selectedKoboForm = {
+                uid: uid,
+                name: name,
+                url: url
+            };
+
+            document.getElementById('selectedKoboForm').value = uid;
+            document.getElementById('selectedKoboFormUrl').value = url;
+            document.getElementById('selectSitesBtn').disabled = false;
+        }
+
+        // Load gathering sites
+        async function loadSites() {
+            try {
+                const response = await fetch('/api/v1/sites/sites/', {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    allSites = data.results || data;
+                    displaySites(allSites);
+                } else {
+                    showError('Failed to load gathering sites');
+                }
+            } catch (error) {
+                showError('Error loading gathering sites: ' + error.message);
+            }
+        }
+
+        function displaySites(sites) {
+            const container = document.getElementById('sitesGrid');
+
+            if (sites.length === 0) {
+                container.innerHTML = '<p>No gathering sites found.</p>';
+            } else {
+                container.innerHTML = sites.map(site => `
+                    <div class="site-card" onclick="toggleSite(${site.id})">
+                        <h4>${site.name}</h4>
+                        <p><strong>Type:</strong> ${site.site_type || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${site.operational_status || 'N/A'}</p>
+                        <p><strong>Population:</strong> ${site.total_population || 'Unknown'}</p>
+                        <p><strong>Location:</strong> ${site.locality || 'N/A'}, ${site.state || 'N/A'}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleSite(siteId) {
+            const card = event.currentTarget;
+            const isSelected = selectedSites.includes(siteId);
+
+            if (isSelected) {
+                selectedSites = selectedSites.filter(id => id !== siteId);
+                card.classList.remove('selected');
+            } else {
+                selectedSites.push(siteId);
+                card.classList.add('selected');
+            }
+
+            document.getElementById('reviewBtn').disabled = selectedSites.length === 0;
+        }
+
+        // Populate review section
+        function populateReview() {
+            const title = document.getElementById('title').value;
+            const assessmentType = document.getElementById('assessment_type').value;
+            const description = document.getElementById('description').value;
+            const selectedSiteNames = allSites
+                .filter(site => selectedSites.includes(site.id))
+                .map(site => site.name);
+
+            const formType = selectedKoboForm?.type === 'manual' ? 'Custom Form' : 'Kobo Form';
+            const formDetails = selectedKoboForm?.type === 'manual' ?
+                `<p><strong>Form:</strong> ${selectedKoboForm?.name || 'None selected'}</p>
+                 <p><strong>Instructions:</strong> ${selectedKoboForm?.instructions || 'No special instructions'}</p>
+                 ${selectedKoboForm?.url ? `<p><strong>External URL:</strong> ${selectedKoboForm.url}</p>` : ''}` :
+                `<p><strong>Form:</strong> ${selectedKoboForm?.name || 'None selected'}</p>
+                 ${selectedKoboForm?.url ? `<p><strong>Kobo URL:</strong> ${selectedKoboForm.url}</p>` : ''}`;
+
+            document.getElementById('reviewContent').innerHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 4px;">
+                    <h4>Assessment Details</h4>
+                    <p><strong>Title:</strong> ${title}</p>
+                    <p><strong>Type:</strong> ${assessmentType}</p>
+                    <p><strong>Description:</strong> ${description || 'No description'}</p>
+
+                    <h4>${formType}</h4>
+                    ${formDetails}
+
+                    <h4>Target Sites (${selectedSites.length})</h4>
+                    <ul>
+                        ${selectedSiteNames.map(name => `<li>${name}</li>`).join('')}
+                    </ul>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 4px;">
+                        <h5>📱 What happens next?</h5>
+                        <p>This assessment will be sent to the mobile apps of Gathering Site Officials at the selected sites. They will receive a notification with instructions to conduct the assessment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create and send assessment
+        async function createAndSendAssessment() {
+            const assessmentData = {
+                title: document.getElementById('title').value,
+                title_ar: document.getElementById('title_ar').value,
+                description: document.getElementById('description').value,
+                assessment_type: document.getElementById('assessment_type').value,
+                kobo_form_id: selectedKoboForm?.uid,
+                kobo_form_url: selectedKoboForm?.url,
+                target_sites: selectedSites
+            };
+
+            try {
+                // Create assessment
+                const response = await fetch('/api/v1/assessments/assessments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                    },
+                    body: JSON.stringify(assessmentData)
+                });
+
+                const assessment = await response.json();
+
+                if (response.ok) {
+                    // Send to sites
+                    const sendResponse = await fetch(`/api/v1/assessments/assessments/${assessment.id}/send-to-sites/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+                        },
+                        body: JSON.stringify({
+                            site_ids: selectedSites
+                        })
+                    });
+
+                    const sendResult = await sendResponse.json();
+
+                    if (sendResponse.ok) {
+                        showSuccess(`Assessment created and sent to ${sendResult.sites_notified.length} gathering sites!`);
+                        setTimeout(() => {
+                            window.location.href = '/api/v1/dashboard/';
+                        }, 2000);
+                    } else {
+                        showError('Assessment created but failed to send: ' + (sendResult.error || 'Unknown error'));
+                    }
+                } else {
+                    showError('Failed to create assessment: ' + (assessment.error || 'Unknown error'));
+                }
+            } catch (error) {
+                showError('Error creating assessment: ' + error.message);
+            }
+        }
+
+        // Utility functions
+        function showError(message) {
+            document.getElementById('messages').innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function showSuccess(message) {
+            document.getElementById('messages').innerHTML = `<div class="success">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

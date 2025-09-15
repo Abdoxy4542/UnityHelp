@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification - UnityAid</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #0d6efd; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 5px 5px; }
+        .code { background: #e9ecef; border: 2px dashed #6c757d; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; margin: 20px 0; border-radius: 5px; }
+        .footer { text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px; }
+        .btn { display: inline-block; padding: 12px 24px; background: #0d6efd; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤝 UnityAid Platform</h1>
+        <h2>Email Verification</h2>
+    </div>
+    
+    <div class="content">
+        <h3>Hello {{ full_name }},</h3>
+        
+        <p>Welcome to UnityAid! Thank you for creating your humanitarian coordination account.</p>
+        
+        <p>To complete your registration and start using UnityAid, please verify your email address using the verification code below:</p>
+        
+        <div class="code">{{ code }}</div>
+        
+        <p><strong>Important:</strong></p>
+        <ul>
+            <li>This code will expire in <strong>10 minutes</strong></li>
+            <li>Enter this code on the verification page to activate your account</li>
+            <li>If you didn't create this account, please ignore this email</li>
+        </ul>
+        
+        <p>Once verified, you'll be able to access all UnityAid features including:</p>
+        <ul>
+            <li>Site management and coordination</li>
+            <li>Assessment creation and data collection</li>
+            <li>Real-time reporting and analytics</li>
+            <li>Integration with humanitarian data sources</li>
+        </ul>
+        
+        <p>Thank you for joining our mission to deliver humanitarian aid more effectively.</p>
+        
+        <p>Best regards,<br>
+        The UnityAid Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message from UnityAid Platform. Please do not reply to this email.</p>
+        <p>If you need help, please contact our support team.</p>
+    </div>
+</body>
+</html>
