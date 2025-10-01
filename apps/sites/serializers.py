@@ -1,7 +1,17 @@
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from django.contrib.gis.geos import Point, GEOSGeometry
 from .models import State, Locality, Site
+
+# Conditional GIS imports
+try:
+    from rest_framework_gis.serializers import GeoFeatureModelSerializer
+    from django.contrib.gis.geos import Point, GEOSGeometry
+    GIS_AVAILABLE = True
+except (ImportError, OSError):
+    # Fallback when GIS is not available
+    GIS_AVAILABLE = False
+    GeoFeatureModelSerializer = serializers.ModelSerializer
+    Point = None
+    GEOSGeometry = None
 
 
 class StateSerializer(serializers.ModelSerializer):

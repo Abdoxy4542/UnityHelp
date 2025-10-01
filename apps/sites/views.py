@@ -3,9 +3,18 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
+# Conditional GIS imports - fallback if GDAL not available
+try:
+    from django.contrib.gis.db.models.functions import Distance
+    from django.contrib.gis.geos import Point
+    from django.contrib.gis.measure import D
+    GIS_AVAILABLE = True
+except (ImportError, OSError):
+    # Fallback when GIS is not available
+    GIS_AVAILABLE = False
+    Distance = None
+    Point = None
+    D = None
 from .models import State, Locality, Site
 from .serializers import (
     StateSerializer, LocalitySerializer, SiteSerializer, SiteDetailSerializer, SiteMapSerializer,

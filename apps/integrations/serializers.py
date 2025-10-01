@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     ExternalDataSource, SudanCrisisData, DisplacementData,
-    RefugeeData, FundingData, HealthData, DataSyncLog
+    RefugeeData, FundingData, HealthData, DataSyncLog,
+    HumanitarianActionPlanData
 )
 
 
@@ -73,3 +74,43 @@ class DataSyncLogSerializer(serializers.ModelSerializer):
         if obj.sync_start and obj.sync_end:
             return (obj.sync_end - obj.sync_start).total_seconds()
         return None
+
+
+class HumanitarianActionPlanDataSerializer(serializers.ModelSerializer):
+    crisis_info = SudanCrisisDataSerializer(source='crisis_data', read_only=True)
+    plan_type_display = serializers.CharField(source='get_plan_type_display', read_only=True)
+    funding_gap_calculated = serializers.SerializerMethodField()
+    sector_count = serializers.SerializerMethodField()
+    location_count = serializers.SerializerMethodField()
+    organization_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HumanitarianActionPlanData
+        fields = [
+            'id', 'crisis_data', 'crisis_info', 'plan_id', 'plan_type', 'plan_type_display',
+            'total_requirements_usd', 'funded_amount_usd', 'funding_gap_usd', 'funding_percentage',
+            'funding_gap_calculated', 'target_population', 'people_in_need',
+            'plan_start_date', 'plan_end_date', 'timeframe_description',
+            'sectors', 'sector_count', 'locations', 'location_count',
+            'organizations', 'organization_count', 'objectives'
+        ]
+
+    def get_funding_gap_calculated(self, obj):
+        """Calculate funding gap if not explicitly set"""
+        if obj.funding_gap_usd:
+            return float(obj.funding_gap_usd)
+        elif obj.total_requirements_usd and obj.funded_amount_usd:
+            return float(obj.total_requirements_usd - obj.funded_amount_usd)
+        return None
+
+    def get_sector_count(self, obj):
+        """Return count of sectors covered by this plan"""
+        return len(obj.sectors) if obj.sectors else 0
+
+    def get_location_count(self, obj):
+        """Return count of locations covered by this plan"""
+        return len(obj.locations) if obj.locations else 0
+
+    def get_organization_count(self, obj):
+        """Return count of organizations involved in this plan"""
+        return len(obj.organizations) if obj.organizations else 0

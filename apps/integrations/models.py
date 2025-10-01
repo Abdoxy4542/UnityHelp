@@ -27,6 +27,7 @@ class ExternalDataSource(models.Model):
         ('acaps', 'ACAPS Analysis'),
         ('wfp', 'World Food Programme'),
         ('fews_net', 'FEWS NET'),
+        ('humanitarian_action', 'Humanitarian Action Info'),
     ]
 
     name = models.CharField(max_length=200)
@@ -176,6 +177,48 @@ class HealthData(models.Model):
 
     class Meta:
         db_table = 'integrations_health_data'
+
+
+class HumanitarianActionPlanData(models.Model):
+    """Specific model for Humanitarian Action Info plan data"""
+    crisis_data = models.ForeignKey(SudanCrisisData, on_delete=models.CASCADE)
+
+    # Plan details
+    plan_id = models.CharField(max_length=100)
+    plan_type = models.CharField(max_length=50, choices=[
+        ('humanitarian_response_plan', 'Humanitarian Response Plan'),
+        ('emergency_appeal', 'Emergency Appeal'),
+        ('regional_response', 'Regional Response'),
+        ('contingency_plan', 'Contingency Plan'),
+        ('general_plan', 'General Plan'),
+    ])
+
+    # Funding information
+    total_requirements_usd = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    funded_amount_usd = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    funding_gap_usd = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    funding_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    # Target population
+    target_population = models.CharField(max_length=200, blank=True)
+    people_in_need = models.PositiveIntegerField(null=True, blank=True)
+
+    # Timeline
+    plan_start_date = models.DateField(null=True, blank=True)
+    plan_end_date = models.DateField(null=True, blank=True)
+    timeframe_description = models.CharField(max_length=200, blank=True)
+
+    # Geographic and sector coverage
+    sectors = models.JSONField(default=list, help_text="List of humanitarian sectors")
+    locations = models.JSONField(default=list, help_text="List of affected locations")
+    organizations = models.JSONField(default=list, help_text="List of participating organizations")
+
+    # Objectives and activities
+    objectives = models.JSONField(default=list, help_text="List of plan objectives")
+
+    class Meta:
+        db_table = 'integrations_humanitarian_action_plan_data'
+        unique_together = ['crisis_data', 'plan_id']
 
 
 class DataSyncLog(models.Model):

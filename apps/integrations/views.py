@@ -7,16 +7,18 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 from .models import (
     ExternalDataSource, SudanCrisisData, DisplacementData,
-    RefugeeData, FundingData, HealthData, DataSyncLog
+    RefugeeData, FundingData, HealthData, DataSyncLog,
+    HumanitarianActionPlanData
 )
 from .serializers import (
     SudanCrisisDataSerializer, ExternalDataSourceSerializer,
-    DataSyncLogSerializer
+    DataSyncLogSerializer, HumanitarianActionPlanDataSerializer
 )
 from .hdx_service import get_hdx_service, get_hdx_hapi_service
 from .dtm_service import get_dtm_service
 from .unhcr_service import get_unhcr_service
 from .fts_service import get_fts_service
+from .humanitarian_action_service import get_humanitarian_action_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -152,6 +154,94 @@ class SudanCrisisDataViewSet(viewsets.ReadOnlyModelViewSet):
                 'total_requirements_usd': float(total_funding['total_requirements'] or 0),
                 'funding_gap_usd': float((total_funding['total_requirements'] or 0) - (total_funding['total_received'] or 0))
             },
+            'last_updated': timezone.now().isoformat()
+        })
+
+
+class HumanitarianActionPlanViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for accessing Humanitarian Action plan data"""
+    permission_classes = [IsAuthenticated]
+    queryset = HumanitarianActionPlanData.objects.all()
+    serializer_class = HumanitarianActionPlanDataSerializer
+
+    def get_queryset(self):
+        queryset = HumanitarianActionPlanData.objects.all()
+
+        # Filter by plan type
+        plan_type = self.request.query_params.get('plan_type')
+        if plan_type:
+            queryset = queryset.filter(plan_type=plan_type)
+
+        # Filter by sectors
+        sector = self.request.query_params.get('sector')
+        if sector:
+            queryset = queryset.filter(sectors__icontains=sector)
+
+        # Filter by locations
+        location = self.request.query_params.get('location')
+        if location:
+            queryset = queryset.filter(locations__icontains=location)
+
+        # Filter by organizations
+        organization = self.request.query_params.get('organization')
+        if organization:
+            queryset = queryset.filter(organizations__icontains=organization)
+
+        return queryset.select_related('crisis_data', 'crisis_data__source').order_by('-crisis_data__crisis_date')
+
+    @action(detail=False, methods=['get'])
+    def plan_types_summary(self, request):
+        """Get summary of humanitarian plans by type"""
+        from django.db import models
+
+        # Count by plan type
+        plan_type_counts = HumanitarianActionPlanData.objects.values('plan_type').annotate(
+            count=models.Count('id'),
+            total_requirements=models.Sum('total_requirements_usd'),
+            total_funded=models.Sum('funded_amount_usd')
+        ).order_by('-count')
+
+        # Convert to readable format
+        summary = []
+        for item in plan_type_counts:
+            plan_type_display = dict(HumanitarianActionPlanData._meta.get_field('plan_type').choices).get(
+                item['plan_type'], item['plan_type']
+            )
+            summary.append({
+                'plan_type': item['plan_type'],
+                'plan_type_display': plan_type_display,
+                'count': item['count'],
+                'total_requirements_usd': float(item['total_requirements'] or 0),
+                'total_funded_usd': float(item['total_funded'] or 0),
+                'funding_gap_usd': float((item['total_requirements'] or 0) - (item['total_funded'] or 0))
+            })
+
+        return Response({
+            'plan_types': summary,
+            'total_plans': HumanitarianActionPlanData.objects.count(),
+            'last_updated': timezone.now().isoformat()
+        })
+
+    @action(detail=False, methods=['get'])
+    def sector_coverage(self, request):
+        """Get humanitarian sector coverage analysis"""
+        plans = HumanitarianActionPlanData.objects.all()
+
+        # Count sector occurrences
+        sector_counts = {}
+        for plan in plans:
+            for sector in plan.sectors:
+                sector_counts[sector] = sector_counts.get(sector, 0) + 1
+
+        # Sort by frequency
+        sorted_sectors = sorted(sector_counts.items(), key=lambda x: x[1], reverse=True)
+
+        return Response({
+            'sector_coverage': [
+                {'sector': sector, 'plan_count': count}
+                for sector, count in sorted_sectors
+            ],
+            'total_unique_sectors': len(sorted_sectors),
             'last_updated': timezone.now().isoformat()
         })
 
@@ -361,6 +451,113 @@ class DataIntegrationViewSet(viewsets.ViewSet):
                 'message': f'DTM sync failed: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['post'])
+    def sync_humanitarian_action_data(self, request):
+        """Trigger Humanitarian Action Info data synchronization"""
+        try:
+            from_date = request.data.get('from_date', '2023-04-15')
+            to_date = request.data.get('to_date', date.today().isoformat())
+
+            from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+            to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+
+            # Get or create Humanitarian Action data source
+            ha_source, created = ExternalDataSource.objects.get_or_create(
+                platform='humanitarian_action',
+                name='Humanitarian Action Info Sudan Plans',
+                defaults={
+                    'api_endpoint': 'https://humanitarianaction.info',
+                    'is_active': True
+                }
+            )
+
+            # Start sync log
+            sync_log = DataSyncLog.objects.create(
+                source=ha_source,
+                sync_start=timezone.now(),
+                status='running',
+                date_from=from_date,
+                date_to=to_date
+            )
+
+            try:
+                ha_service = get_humanitarian_action_service()
+
+                # Get comprehensive crisis response data
+                crisis_data = ha_service.get_crisis_response_data(
+                    from_date=from_date,
+                    to_date=to_date
+                )
+
+                records_created = 0
+
+                # Process each category of data
+                for data_category, plans in crisis_data.items():
+                    for plan in plans:
+                        # Create SudanCrisisData record
+                        crisis_data_record, created = SudanCrisisData.objects.get_or_create(
+                            source=ha_source,
+                            external_id=plan.get('id', f"ha_{data_category}_{records_created}"),
+                            defaults={
+                                'data_type': self._map_humanitarian_action_data_type(data_category),
+                                'title': plan.get('title', f"Humanitarian Action {data_category}"),
+                                'description': plan.get('description', ''),
+                                'crisis_date': from_date,
+                                'report_date': date.today(),
+                                'location_name': ', '.join(plan.get('locations', ['Sudan'])),
+                                'raw_data': plan,
+                                'url': plan.get('url', ''),
+                                'tags': plan.get('sectors', [])
+                            }
+                        )
+
+                        if created:
+                            # Create specific humanitarian action plan data
+                            HumanitarianActionPlanData.objects.create(
+                                crisis_data=crisis_data_record,
+                                plan_id=plan.get('id', ''),
+                                plan_type=plan.get('type', 'general_plan'),
+                                target_population=plan.get('target_population', ''),
+                                timeframe_description=plan.get('timeframe', ''),
+                                sectors=plan.get('sectors', []),
+                                locations=plan.get('locations', []),
+                                organizations=plan.get('organizations', []),
+                                objectives=plan.get('objectives', [])
+                            )
+                            records_created += 1
+
+                # Complete sync log
+                sync_log.sync_end = timezone.now()
+                sync_log.status = 'completed'
+                sync_log.records_processed = sum(len(plans) for plans in crisis_data.values())
+                sync_log.records_created = records_created
+                sync_log.save()
+
+                ha_source.last_sync = timezone.now()
+                ha_source.save()
+
+                return Response({
+                    'status': 'success',
+                    'message': 'Humanitarian Action data sync completed',
+                    'records_processed': sync_log.records_processed,
+                    'records_created': records_created,
+                    'categories_synced': list(crisis_data.keys())
+                })
+
+            except Exception as e:
+                sync_log.sync_end = timezone.now()
+                sync_log.status = 'failed'
+                sync_log.error_message = str(e)
+                sync_log.save()
+                raise
+
+        except Exception as e:
+            logger.error(f"Humanitarian Action sync failed: {e}")
+            return Response({
+                'status': 'error',
+                'message': f'Humanitarian Action sync failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'])
     def test_connections(self, request):
         """Test connections to all external humanitarian APIs"""
@@ -436,6 +633,20 @@ class DataIntegrationViewSet(viewsets.ViewSet):
                 'error': str(e)
             }
 
+        # Test Humanitarian Action connection
+        try:
+            ha_service = get_humanitarian_action_service()
+            results['humanitarian_action'] = {
+                'status': 'success' if ha_service.test_connection() else 'failed',
+                'service': 'Humanitarian Action Info'
+            }
+        except Exception as e:
+            results['humanitarian_action'] = {
+                'status': 'error',
+                'service': 'Humanitarian Action Info',
+                'error': str(e)
+            }
+
         return Response({
             'connections': results,
             'tested_at': timezone.now().isoformat()
@@ -451,3 +662,13 @@ class DataIntegrationViewSet(viewsets.ViewSet):
             'food_security': 'food_security'
         }
         return mapping.get(hdx_type, 'needs')
+
+    def _map_humanitarian_action_data_type(self, ha_type: str) -> str:
+        """Map Humanitarian Action data types to our internal data types"""
+        mapping = {
+            'humanitarian_plans': 'needs',
+            'response_activities': 'needs',
+            'funding_appeals': 'funding',
+            'operational_updates': 'needs'
+        }
+        return mapping.get(ha_type, 'needs')

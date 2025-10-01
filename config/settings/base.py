@@ -27,6 +27,13 @@ DEBUG = env('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
+# Check if GDAL is available before adding GIS apps
+try:
+    from django.contrib.gis.db import models as gis_models
+    GDAL_AVAILABLE = True
+except (ImportError, OSError, Exception):
+    GDAL_AVAILABLE = False
+
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -34,12 +41,14 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',  # For PostGIS support
 ]
+
+# Only add GIS if GDAL is available
+if GDAL_AVAILABLE:
+    DJANGO_APPS.append('django.contrib.gis')
 
 THIRD_PARTY_APPS = [
     'rest_framework',
-    'rest_framework_gis',
     'django_filters',
     'corsheaders',
     'drf_spectacular',  # API documentation
@@ -48,14 +57,17 @@ THIRD_PARTY_APPS = [
     'django_extensions',
 ]
 
+# Only add GIS rest framework if GDAL is available
+if GDAL_AVAILABLE:
+    THIRD_PARTY_APPS.append('rest_framework_gis')
+
 LOCAL_APPS = [
     'apps.accounts',
     'apps.sites',
     'apps.reports',
     'apps.assessments',
-    'apps.alerts',
     'apps.integrations',
-    'apps.dashboard',
+    'apps.mobile_api',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

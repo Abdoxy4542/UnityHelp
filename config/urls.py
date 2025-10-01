@@ -14,18 +14,15 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     
-    # Dashboard (web interface)
-    path('dashboard/', include('apps.dashboard.urls')),
-
     # API endpoints
     path('api/v1/auth/', include('apps.accounts.urls')),
     path('api/v1/sites/', include('apps.sites.urls')),
     path('api/v1/reports/', include('apps.reports.urls')),
     path('api/v1/assessments/', include('apps.assessments.urls')),
-    path('api/v1/dashboard/', include('apps.dashboard.urls')),
-    # Temporarily disable endpoints for apps without urls modules
-    # path('api/v1/alerts/', include('apps.alerts.urls')),
     path('api/v1/integrations/', include('apps.integrations.urls')),
+
+    # Mobile API endpoints
+    path('api/mobile/', include('apps.mobile_api.urls')),
     
     # Web URLs
     path('', include((web_urlpatterns, 'accounts'))),
