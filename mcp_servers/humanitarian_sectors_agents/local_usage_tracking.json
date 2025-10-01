@@ -1,0 +1,16 @@
+{
+  "daily_usage": {
+    "2025-09-24": {
+      "requests": 3,
+      "input_tokens": 99,
+      "output_tokens": 24,
+      "estimated_cost": 0.000147,
+      "models_used": {
+        "gpt-3.5-turbo": 3
+      }
+    }
+  },
+  "total_requests": 3,
+  "total_cost_estimate": 0.000147,
+  "start_date": "2025-09-24T23:14:51.760084"
+}
