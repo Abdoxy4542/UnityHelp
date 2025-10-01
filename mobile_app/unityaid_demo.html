@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnityAid Mobile App Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .input {
+            height: 50px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0 15px;
+            font-size: 16px;
+            background: #f9f9f9;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: white;
+        }
+
+        .button {
+            background: #2563eb;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: #1d4ed8;
+        }
+
+        .dashboard {
+            display: none;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2563eb;
+            padding: 20px;
+            padding-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .welcome-text {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logout-button {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .section {
+            background: white;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #111827;
+        }
+
+        .stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .stat-card {
+            width: 48%;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .nav-button, .feature-button {
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+
+        .feature-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            text-align: center;
+        }
+
+        .nav-button:hover, .feature-button:hover {
+            opacity: 0.8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-container">
+                <div class="title">UnityAid</div>
+                <div class="subtitle">Humanitarian Platform</div>
+
+                <div class="form">
+                    <div class="label">Username</div>
+                    <input type="text" class="input" id="username" placeholder="Enter your username">
+
+                    <div class="label">Password</div>
+                    <input type="password" class="input" id="password" placeholder="Enter your password">
+
+                    <button class="button" onclick="handleLogin()">Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboardScreen" class="dashboard">
+            <!-- Header -->
+            <div class="header">
+                <div class="welcome-text">Welcome, <span id="usernameDisplay">User</span>!</div>
+                <button class="logout-button" onclick="handleLogout()">Logout</button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="section">
+                <div class="section-title">Dashboard Overview</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">24</div>
+                        <div class="stat-label">Active Reports</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">7</div>
+                        <div class="stat-label">Assessments</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Sites</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Urgent</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <div class="section-title">Quick Actions</div>
+                <button class="nav-button" onclick="showAlert('Reports', 'Navigate to Reports Screen')">📝 Reports</button>
+                <button class="nav-button" onclick="showAlert('Assessments', 'Navigate to Assessments Screen')">📋 Assessments</button>
+                <button class="nav-button" onclick="showAlert('Sites', 'Navigate to Sites Screen')">📍 Sites</button>
+                <button class="nav-button" onclick="showAlert('Profile', 'Navigate to Profile Screen')">👤 Profile</button>
+            </div>
+
+            <!-- Core Features -->
+            <div class="section">
+                <div class="section-title">Core Features</div>
+                <button class="feature-button" onclick="showAlert('Text Report', 'Text reporting functionality ready!')">📄 Create Text Report</button>
+                <button class="feature-button" onclick="showAlert('Voice Report', 'Voice recording functionality ready!')">🎤 Voice Report</button>
+                <button class="feature-button" onclick="showAlert('Image Report', 'Camera functionality ready!')">📷 Image Report</button>
+                <button class="feature-button" onclick="showAlert('Site Update', 'GPS-based site updates ready!')">📍 Update Site Info</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                alert('Error: Please enter username and password');
+                return;
+            }
+
+            // Show success and switch to dashboard
+            alert('Success: Login successful!');
+            document.getElementById('usernameDisplay').textContent = username;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+        }
+
+        function handleLogout() {
+            alert('Logged out successfully');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboardScreen').style.display = 'none';
+        }
+
+        function showAlert(title, message) {
+            alert(title + ': ' + message);
+        }
+
+        // Auto-focus on username field
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>
