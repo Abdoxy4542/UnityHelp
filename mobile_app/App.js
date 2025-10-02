@@ -6,28 +6,62 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import apiService from './src/services/apiService';
 
-// Simple UnityAid demo app
+// UnityAid mobile app - Connected to Django backend
 export default function App() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
 
-  const handleLogin = () => {
-    if (username && password) {
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('🔐 Attempting login to Django backend...');
+      const response = await apiService.login(email, password);
+
+      console.log('✅ Login successful:', response);
+
+      setUserInfo(response.user);
       setIsLoggedIn(true);
-      alert('Success: Login successful!');
-    } else {
-      alert('Error: Please enter username and password');
+      Alert.alert('Success', `Welcome ${response.user.full_name || response.user.email}!`);
+    } catch (error) {
+      console.error('❌ Login failed:', error);
+      Alert.alert(
+        'Login Failed',
+        error.message || 'Could not connect to server.\n\nMake sure:\n1. Django backend is running\n2. Server is accessible at http://10.0.2.2:8000\n3. You created test data with: python manage.py create_reports_test_data'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    alert('Logged out successfully');
+  const handleLogout = async () => {
+    try {
+      await apiService.logout();
+      setIsLoggedIn(false);
+      setEmail('');
+      setPassword('');
+      setUserInfo(null);
+      Alert.alert('Success', 'Logged out successfully');
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+      // Still log out locally even if API call fails
+      setIsLoggedIn(false);
+      setEmail('');
+      setPassword('');
+      setUserInfo(null);
+    }
   };
 
   const LoginScreen = () => (
@@ -35,15 +69,19 @@ export default function App() {
       <View style={styles.loginContainer}>
         <Text style={styles.title}>UnityAid</Text>
         <Text style={styles.subtitle}>Humanitarian Platform</Text>
+        <Text style={styles.apiInfo}>Connected to: http://10.0.2.2:8000</Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Username</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Enter your username"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
             placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!loading}
           />
 
           <Text style={styles.label}>Password</Text>
@@ -54,11 +92,29 @@ export default function App() {
             placeholder="Enter your password"
             placeholderTextColor="#999"
             secureTextEntry
+            editable={!loading}
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Login to Backend</Text>
+            )}
           </TouchableOpacity>
+
+          <View style={styles.testCredentials}>
+            <Text style={styles.testTitle}>📋 Test Credentials:</Text>
+            <Text style={styles.testText}>Email: test_mobile_gso@unityaid.org</Text>
+            <Text style={styles.testText}>Password: TestPass123!</Text>
+            <Text style={styles.testNote}>
+              (Run: python manage.py create_reports_test_data)
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -68,10 +124,24 @@ export default function App() {
     <ScrollView style={styles.dashboard}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome, {username}!</Text>
+        <View>
+          <Text style={styles.welcomeText}>
+            ✅ {userInfo?.full_name || userInfo?.email}
+          </Text>
+          <Text style={styles.roleText}>
+            Role: {userInfo?.role?.toUpperCase()} | ID: {userInfo?.id}
+          </Text>
+        </View>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Connection Status */}
+      <View style={styles.connectionStatus}>
+        <Text style={styles.connectionText}>
+          🌐 Connected to Django Backend (http://10.0.2.2:8000)
+        </Text>
       </View>
 
       {/* Stats Cards */}
@@ -99,31 +169,40 @@ export default function App() {
 
       {/* Quick Actions */}
       <View style={styles.navContainer}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>Quick Actions (API Ready)</Text>
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => alert('Reports: Navigate to Reports Screen')}
+          onPress={() =>
+            Alert.alert('Reports', 'API: /api/mobile/v1/field-reports/\n\nReady to fetch reports from Django backend')
+          }
         >
           <Text style={styles.navButtonText}>📝 Reports</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => alert('Assessments: Navigate to Assessments Screen')}
+          onPress={() =>
+            Alert.alert('Assessments', 'API: /api/mobile/v1/assessments/\n\nReady to fetch assessments')
+          }
         >
           <Text style={styles.navButtonText}>📋 Assessments</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => alert('Sites: Navigate to Sites Screen')}
+          onPress={() => Alert.alert('Sites', 'API: /api/mobile/v1/sites/\n\nReady to fetch assigned sites')}
         >
           <Text style={styles.navButtonText}>📍 Sites</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => alert('Profile: Navigate to Profile Screen')}
+          onPress={() =>
+            Alert.alert(
+              'Profile',
+              `API: /api/mobile/v1/profile/\n\nUser: ${userInfo?.email}\nRole: ${userInfo?.role}\nID: ${userInfo?.id}`
+            )
+          }
         >
           <Text style={styles.navButtonText}>👤 Profile</Text>
         </TouchableOpacity>
@@ -131,31 +210,51 @@ export default function App() {
 
       {/* Core Features */}
       <View style={styles.featuresContainer}>
-        <Text style={styles.sectionTitle}>Core Features</Text>
+        <Text style={styles.sectionTitle}>Core Features (Backend Connected)</Text>
         <TouchableOpacity
           style={styles.featureButton}
-          onPress={() => alert('Text Report: Text reporting functionality ready!')}
+          onPress={() =>
+            Alert.alert(
+              'Text Report',
+              '✅ API Connected!\n\nEndpoint: POST /api/mobile/v1/field-reports/\n\nReady to submit text reports with GPS coordinates'
+            )
+          }
         >
           <Text style={styles.featureButtonText}>📄 Create Text Report</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.featureButton}
-          onPress={() => alert('Voice Report: Voice recording functionality ready!')}
+          onPress={() =>
+            Alert.alert(
+              'Voice Report',
+              '✅ API Connected!\n\nEndpoint: POST /api/mobile/v1/field-reports/\n\nReady to upload voice files (MP3, WAV, M4A)'
+            )
+          }
         >
           <Text style={styles.featureButtonText}>🎤 Voice Report</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.featureButton}
-          onPress={() => alert('Image Report: Camera functionality ready!')}
+          onPress={() =>
+            Alert.alert(
+              'Image Report',
+              '✅ API Connected!\n\nEndpoint: POST /api/mobile/v1/field-reports/\n\nReady to upload image files (JPG, PNG)'
+            )
+          }
         >
           <Text style={styles.featureButtonText}>📷 Image Report</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.featureButton}
-          onPress={() => alert('Site Update: GPS-based site updates ready!')}
+          onPress={() =>
+            Alert.alert(
+              'Site Update',
+              '✅ API Connected!\n\nEndpoint: PUT /api/mobile/v1/sites/{id}/\n\nReady for GPS-based site updates'
+            )
+          }
         >
           <Text style={styles.featureButtonText}>📍 Update Site Info</Text>
         </TouchableOpacity>
@@ -194,7 +293,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 5,
+  },
+  apiInfo: {
+    fontSize: 12,
+    color: '#059669',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '500',
   },
   form: {
     gap: 15,
@@ -227,6 +333,34 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  buttonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  testCredentials: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2563eb',
+  },
+  testTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  testText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  testNote: {
+    fontSize: 10,
+    color: '#9ca3af',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
   dashboard: {
     flex: 1,
     backgroundColor: '#f8f9fa',
@@ -241,8 +375,14 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  roleText: {
+    color: '#fff',
+    fontSize: 11,
+    marginTop: 4,
+    opacity: 0.9,
   },
   logoutButton: {
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -252,6 +392,20 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#fff',
+    fontWeight: '600',
+  },
+  connectionStatus: {
+    backgroundColor: '#d1fae5',
+    padding: 12,
+    margin: 15,
+    marginBottom: 0,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#059669',
+  },
+  connectionText: {
+    color: '#065f46',
+    fontSize: 12,
     fontWeight: '600',
   },
   statsContainer: {

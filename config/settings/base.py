@@ -68,6 +68,7 @@ LOCAL_APPS = [
     'apps.assessments',
     'apps.integrations',
     'apps.mobile_api',
+    'apps.chat',  # AI Chat interface with RAG
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

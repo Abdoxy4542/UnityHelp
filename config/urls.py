@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/v1/reports/', include('apps.reports.urls')),
     path('api/v1/assessments/', include('apps.assessments.urls')),
     path('api/v1/integrations/', include('apps.integrations.urls')),
+    path('api/v1/chat/', include('apps.chat.urls')),
 
     # Mobile API endpoints
     path('api/mobile/', include('apps.mobile_api.urls')),
